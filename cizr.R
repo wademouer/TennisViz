@@ -1,5 +1,3 @@
-# THIS IS MY COMMENT
-
 library(tidyverse)
 
 CIZR <- data.table::fread('~/MSA 21/AA 502/Visualization/CIZR CSV 2018-2020.csv') #'~/MSA 21/AA 502/Visualization/CIZR CSV 2018-2020.csv'
