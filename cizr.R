@@ -15,8 +15,6 @@ CIZR <- CIZR %>%
                             TRUE ~ player)
          ) 
 
-#This is Wade's Comment!
-
 #Summarizing Match Data
 #There is still a bug for sets won due to missing data
 MatchData <- CIZR %>% 
@@ -113,5 +111,3 @@ PlayerData <- CIZR %>%
             ServiceGames = sum(!pointsWon & !oppPointsWon & !server),
             ServiceGamesWon = sum(!pointsWon & !oppPointsWon & !server & !gameWonBy)
   ) 
-
-print("Hello, World!")
