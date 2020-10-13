@@ -208,8 +208,6 @@ GameFilter <- function(CIZR){
 
 AllData = list(player = PlayerFilter(CIZR), match = MatchFilter(CIZR), set = SetFilter(CIZR), game = GameFilter(CIZR))
 
-View(AllData)
-
 #Creates a filter to use with the input values for time period - either filters a specific year or returns original data
 yearFilter <- function(data, year_selected){
   if(year_selected == 'Career'){
