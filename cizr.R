@@ -111,4 +111,3 @@ PlayerData <- CIZR %>%
             ServiceGames = sum(!pointsWon & !oppPointsWon & !server),
             ServiceGamesWon = sum(!pointsWon & !oppPointsWon & !server & !gameWonBy)
   ) 
-
