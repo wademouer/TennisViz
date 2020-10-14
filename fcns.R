@@ -1,4 +1,4 @@
-### Filtering ###
+### Filtering and building plots###
 
 library(tidyverse)
 library(plotly)
@@ -15,55 +15,16 @@ CIZR <- CIZR %>%
                             TRUE ~ player)
   ) 
 
+
 PlayerFilter <- function(CIZR){
   CIZR %>% 
-    group_by(player) %>% 
-    summarise(TotalMatches = sum(set == 1 & !gamesWon & !oppGamesWon & !pointsWon & !oppPointsWon),
-              MatchesWon = sum(setsWon == 1 & gamesWon == 5 & pointsWon == 3 & !pointWonBy),
-              TotalSets = sum(!gamesWon & !oppGamesWon & !pointsWon & !oppPointsWon),
-              SetsWon = sum(gamesWon == 5 & pointsWon == 3 & !pointWonBy),
-              TotalGames = sum(!score & !oppScore),
-              GamesWon = sum(!score & !oppScore & !gameWonBy),
-              PointsWon = sum(!pointWonBy),
-              oppPointsWon = sum(pointWonBy),
-              TotalPoints = PointsWon + oppPointsWon,
-              Winners = sum(!pointWonBy & outcome == 'Winner'),
-              ErrorsForced = sum(!pointWonBy & outcome == 'ForcedError'), 
-              UnforcedErrors = sum(pointWonBy & outcome == 'UnforcedError'),
-              BreakPoints =  sum(server & returnerScore == 40),
-              BreakPointsWon = sum(server & returnerScore == 40 & !pointWonBy),
-              Aces = sum(!pointWonBy & outcome == 'Ace'),
-              FirstServeCount = sum(!server),
-              FirstServeInCount = sum(!server & firstServeIn),
-              FirstServeWonCount = sum(!server & firstServeIn & !pointWonBy),
-              FirstServeInPct = FirstServeInCount/FirstServeCount,
-              FirstServeWonPct = FirstServeWonCount/FirstServeInCount, 
-              SecondServeCount = sum(!server & !firstServeIn), 
-              SecondServeInCount = sum(!server & !firstServeIn & !(outcome %in% c('Fault', 'Let'))),
-              SecondServeWonCount = sum(!server & !firstServeIn & !pointWonBy),
-              SecondServeInPct = SecondServeInCount/SecondServeCount,
-              SecondServeWonPct = SecondServeWonCount/SecondServeCount, 
-              DoubleFault = sum(!server & !firstServeIn & outcome %in% c('Fault', 'Let')),
-              FirstReturnerCount = sum(server & firstServeIn),
-              FirstReturnedInCount = sum(server & firstServeIn & returnInPlay),
-              FirstReturnPct = FirstReturnedInCount/FirstReturnerCount,
-              SecondReturnerCount = sum(server & !firstServeIn),
-              SecondReturnedInCount = sum(server & !firstServeIn & returnInPlay),
-              SecondReturnPct = SecondReturnedInCount/SecondReturnerCount,
-              ShortRallies = sum(rallyLength < 5),
-              ShortRalliesWon = sum(rallyLength < 5 & !pointWonBy),
-              ShortRallyWinPct = ShortRalliesWon/ShortRallies, 
-              MedRallies = sum(rallyLength > 4 & rallyLength < 9),
-              MedRalliesWon = sum(rallyLength > 4 & rallyLength < 9 & !pointWonBy),
-              MedRallyWinPct = MedRalliesWon/MedRallies,
-              LongRallies = sum(rallyLength > 8 ),
-              LongRalliesWon = sum(rallyLength > 8 & !pointWonBy),
-              LongRallyWinPct = LongRalliesWon/ LongRallies,
-              ServiceGames = sum(!pointsWon & !oppPointsWon & !server),
-              ServiceGamesWon = sum(!pointsWon & !oppPointsWon & !server & !gameWonBy)
-    ) 
+    MatchFilter() %>% 
+    group_by(player) %>% summarise(TotalMatches = n(),
+                                       MatchesWon = sum(SetsWon == 2),
+                                       across(where(is.numeric), sum))
 }
 
+#Will change
 MatchFilter <- function(CIZR) {
   CIZR %>% 
     group_by(matchId, player, date) %>% 
@@ -114,6 +75,7 @@ MatchFilter <- function(CIZR) {
     mutate(year = as.factor(format(date, format = '%Y')), month = as.factor(format(date, format = "%Y-%b")))
 }
 
+#Will change
 SetFilter <- function(CIZR){
   CIZR %>% 
     group_by(setId, player, date) %>% 
@@ -161,6 +123,7 @@ SetFilter <- function(CIZR){
     mutate(year = as.factor(format(date, format = '%Y')), month = as.factor(format(date, format = "%Y-%B")))
 }
 
+#will change slightly
 GameFilter <- function(CIZR){
   CIZR %>% 
     group_by(gameId, player, date) %>% 
@@ -205,6 +168,7 @@ GameFilter <- function(CIZR){
     arrange(date) %>% 
     mutate(year = as.factor(format(date, format = '%Y')), month = as.factor(format(date, format = "%Y-%B")))
 }
+
 
 AllData = list(player = PlayerFilter(CIZR), match = MatchFilter(CIZR), set = SetFilter(CIZR), game = GameFilter(CIZR))
 
