@@ -4,7 +4,9 @@ library(tidyverse)
 library(plotly)
 
 
-CIZR <- data.table::fread('~/MSA 21/AA 502/Visualization/CIZR CSV 2018-2020.csv')
+# CIZR <- data.table::fread('~/MSA 21/AA 502/Visualization/CIZR CSV 2018-2020.csv')
+CIZR <- data.table::fread('C:\Users\ericd\Downloads\CIZR CSV 2018-2020.csv')  # on Eric's machine
+
 CIZR <- CIZR %>% 
   mutate(date = as.Date(date, '%m/%d/%y'),
          player = case_when(str_detect(player, 'Rebol') ~ 'Amanda Rebol',
