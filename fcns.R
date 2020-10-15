@@ -293,7 +293,8 @@ OutcomesBar(CIZR, name="Bianca Moldovan")
 # This creates a barchart breaking down the reasons for the outcome from the OutcomesBar function above it
 BreakdownBar <- function(data, time = 'Career', name, won = T){
   data <- data %>% filter(case_when(won ~ !pointWonBy,
-                                    !won ~ pointWonBy == 1)) %>% filter(outcome == "UnforcedError")
+                                    !won ~ pointWonBy == 1)) %>%
+                                    filter(outcome == "UnforcedError")  # How to point this to input value?
   
   if(time != 'Career'){
     data <- data %>% filter(format(date, format = '%Y') == time)
@@ -302,21 +303,21 @@ BreakdownBar <- function(data, time = 'Career', name, won = T){
   dataP <- data %>% filter(player == name)
   
   getFreq <- function(df, name){
-    df %>% group_by(errorType) %>% 
+    df %>% group_by(shotType) %>% 
       summarize(n = n()) %>% 
       #ungroup() %>% 
-      mutate(errorType = factor(errorType, levels = errorType[order(n)]),
+      mutate(shotType = factor(shotType, levels = shotType[order(n)]),
              freq = n / sum(n),
              filter = name)
   }
   
   data %>% getFreq('Team Average') %>% rbind(getFreq(dataP, name)) %>% 
-    ggplot(aes(x = errorType, y = freq, fill = filter)) +
+    ggplot(aes(x = shotType, y = freq, fill = filter)) +
     geom_col(position = 'dodge') +
     scale_y_continuous(labels = scales::percent)+
-    labs(#title = 'Error Type Frequencies for Points Won',
+    labs(#title = 'Shot Type Frequencies for Points Won',
       y = 'Frequency',
-      x = 'Error Type',
+      x = 'Shot Type',
       fill = '') + 
     scale_fill_manual(values = pal)  + theme_minimal(base_size = 16)
   
