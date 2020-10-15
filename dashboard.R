@@ -84,15 +84,25 @@ ui <- dashboardPage(
               ),
               fluidRow(
                 box(h2('Outcome Breakdown'),
-                    selectInput("breakdown", "Outcome Type:", c(as.character(unique(CIZR$errorType))), selected = 'Net'), width = 4)
+                    selectInput("outcomeSelect", "Outcome Type:", c(as.character(unique(CIZR$outcome))), selected = 'UnforcedError'), width = 4)
                 # box(
                 #   plotlyOutput('MatchWins'), width = 8
                 # ),
                 
               ),
+              
+              # Shot type breakdown bar charts
               fluidRow(
-                box(title = 'Outcome Breakdown (Strengths)', plotOutput('WinningBreakdown')),
-                box(title = 'Outcome Breakdown (Weaknesses)', plotOutput('LosingBreakdown'))
+                box(title = 'Shot Type Breakdown (Wins)', plotOutput('WinningShotBreakdown'), width=3),
+                box(title = 'Shot Type Breakdown (Losses)', plotOutput('LosingShotBreakdown'), width=3),
+                box(title = 'Error Type Breakdown (Wins)', plotOutput('WinningErrorBreakdown'), width=3),
+                box(title = 'Error Type Breakdown (Losses)', plotOutput('LosingErrorBreakdown'), width=3)
+              )
+              
+              # Error type breakdown bar charts
+              # fluidRow(
+              #   box(title = 'Error Type Breakdown (Wins)', plotOutput('WinningErrorBreakdown')),
+              #   box(title = 'Error Type Breakdown (Losses)', plotOutput('LosingErrorBreakdown'))
               )
               # fluidRow(
               #   valueBoxOutput('MatchWinsBox'),
@@ -114,7 +124,7 @@ ui <- dashboardPage(
               h1('This is the player page'))
     )
   )
-)
+# )
 
 
 server <- function(input, output){
@@ -148,15 +158,29 @@ server <- function(input, output){
   output$LosingOutcomes <- renderPlot({
     CIZR %>% OutcomesBar(name = input$player, time=input$time, won = F)
   })
-  
-  output$WinningBreakdown <- renderPlot({
-    CIZR %>% BreakdownBar(name = input$player, time=input$time)
+
+    
+# Shot Type Breakdown bar charts
+  output$WinningShotBreakdown <- renderPlot({
+    CIZR %>% BreakdownShot(name = input$player, time=input$time, outcomeParam=input$outcomeSelect)
   })
   
-  output$LosingBreakdown <- renderPlot({
-    CIZR %>% BreakdownBar(name = input$player, time=input$time, won = F)
+  output$LosingShotBreakdown <- renderPlot({
+    CIZR %>% BreakdownShot(name = input$player, time=input$time, outcomeParam=input$outcomeSelect, won = F)
+  })
+
+  
+# Error Type Breakdown bar charts
+  output$WinningErrorBreakdown <- renderPlot({
+    CIZR %>% BreakdownError(name = input$player, time=input$time, outcomeParam=input$outcomeSelect)
   })
   
+  output$LosingErrorBreakdown <- renderPlot({
+    CIZR %>% BreakdownError(name = input$player, time=input$time, outcomeParam=input$outcomeSelect, won = F)
+  })
+
+  
+    
   output$MatchesBox <- renderInfoBox({
     infoBox(
       'Matches Won',

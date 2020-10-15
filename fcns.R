@@ -288,13 +288,13 @@ OutcomesBar <- function(data, time = 'Career', name, won = T){
   
 }
 
-OutcomesBar(CIZR, name="Bianca Moldovan")
 
-# This creates a barchart breaking down the reasons for the outcome from the OutcomesBar function above it
-BreakdownBar <- function(data, time = 'Career', name, won = T){
+
+# This creates a bar chart breaking down the Shot Types for the outcome from the OutcomesBar function above it
+BreakdownShot <- function(data, time = 'Career', name, outcomeParam = 'UnforcedError', won = T){
   data <- data %>% filter(case_when(won ~ !pointWonBy,
                                     !won ~ pointWonBy == 1)) %>%
-                                    filter(outcome == "UnforcedError")  # How to point this to input value?
+                                    filter(outcome == outcomeParam)
   
   if(time != 'Career'){
     data <- data %>% filter(format(date, format = '%Y') == time)
@@ -319,11 +319,47 @@ BreakdownBar <- function(data, time = 'Career', name, won = T){
       y = 'Frequency',
       x = 'Shot Type',
       fill = '') + 
-    scale_fill_manual(values = pal)  + theme_minimal(base_size = 16)
+    scale_fill_manual(values = pal)  + theme_minimal(base_size = 16) +
+    theme(legend.position = "bottom")
   
 }
 
-BreakdownBar(CIZR, name="Bianca Moldovan", won = F)
+
+
+# This creates a bar chart breaking down the Error Types for the outcome from the OutcomesBar function above it
+BreakdownError <- function(data, time = 'Career', name, outcomeParam = 'UnforcedError', won = T){
+  data <- data %>% filter(case_when(won ~ !pointWonBy,
+                                    !won ~ pointWonBy == 1)) %>%
+    filter(outcome == outcomeParam)
+  
+  if(time != 'Career'){
+    data <- data %>% filter(format(date, format = '%Y') == time)
+  }
+  
+  dataP <- data %>% filter(player == name)
+  
+  getFreq <- function(df, name){
+    df %>% group_by(errorType) %>% 
+      summarize(n = n()) %>% 
+      #ungroup() %>% 
+      mutate(errorType = factor(errorType, levels = errorType[order(n)]),
+             freq = n / sum(n),
+             filter = name)
+  }
+  
+  data %>% getFreq('Team Average') %>% rbind(getFreq(dataP, name)) %>% 
+    ggplot(aes(x = errorType, y = freq, fill = filter)) +
+    geom_col(position = 'dodge') +
+    scale_y_continuous(labels = scales::percent)+
+    labs(#title = 'Shot Type Frequencies for Points Won',
+      y = 'Frequency',
+      x = 'Error Type',
+      fill = '') + 
+    scale_fill_manual(values = pal)  + theme_minimal(base_size = 16) +
+    theme(legend.position = "bottom")
+  
+}
+
 
 
 pal <- c('#D45555', '#A9A9A9', '#414770', '#566246', '#FAFF81','#4b5f6d')
