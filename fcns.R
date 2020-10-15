@@ -5,7 +5,7 @@ library(plotly)
 
 
 # CIZR <- data.table::fread('~/MSA 21/AA 502/Visualization/CIZR CSV 2018-2020.csv')
-CIZR <- data.table::fread('C:\Users\ericd\Downloads\CIZR CSV 2018-2020.csv')  # on Eric's machine
+CIZR <- data.table::fread('C:/Users/ericd/Downloads/CIZR CSV 2018-2020.csv')  # on Eric's machine
 
 CIZR <- CIZR %>% 
   mutate(date = as.Date(date, '%m/%d/%y'),
@@ -255,7 +255,7 @@ WinRatePlotly <- function(data, var){
   
 }
 
-#This creaes a bar chart of the outcome of points over a give time period, compared to the teams average
+#This creates a bar chart of the outcome of points over a give time period, compared to the teams average
 #filter by whether the point was won or lost by the nscu player
 OutcomesBar <- function(data, time = 'Career', name, won = T){
   data <- data %>% filter(case_when(won ~ !pointWonBy,
@@ -288,6 +288,41 @@ OutcomesBar <- function(data, time = 'Career', name, won = T){
   
 }
 
+OutcomesBar(CIZR, name="Bianca Moldovan")
+
+# This creates a barchart breaking down the reasons for the outcome from the OutcomesBar function above it
+BreakdownBar <- function(data, time = 'Career', name, won = T){
+  data <- data %>% filter(case_when(won ~ !pointWonBy,
+                                    !won ~ pointWonBy == 1)) %>% filter(outcome == "UnforcedError")
+  
+  if(time != 'Career'){
+    data <- data %>% filter(format(date, format = '%Y') == time)
+  }
+  
+  dataP <- data %>% filter(player == name)
+  
+  getFreq <- function(df, name){
+    df %>% group_by(errorType) %>% 
+      summarize(n = n()) %>% 
+      #ungroup() %>% 
+      mutate(errorType = factor(errorType, levels = errorType[order(n)]),
+             freq = n / sum(n),
+             filter = name)
+  }
+  
+  data %>% getFreq('Team Average') %>% rbind(getFreq(dataP, name)) %>% 
+    ggplot(aes(x = errorType, y = freq, fill = filter)) +
+    geom_col(position = 'dodge') +
+    scale_y_continuous(labels = scales::percent)+
+    labs(#title = 'Error Type Frequencies for Points Won',
+      y = 'Frequency',
+      x = 'Error Type',
+      fill = '') + 
+    scale_fill_manual(values = pal)  + theme_minimal(base_size = 16)
+  
+}
+
+BreakdownBar(CIZR, name="Bianca Moldovan", won = F)
 
 
 pal <- c('#D45555', '#A9A9A9', '#414770', '#566246', '#FAFF81','#4b5f6d')

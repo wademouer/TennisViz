@@ -77,11 +77,23 @@ ui <- dashboardPage(
                 # ),
                 
               ),
-              
+                            
               fluidRow(
                 box(title = 'Frequency of Outcomes for Points Won',plotOutput('WinningOutcomes')),
                 box(title = 'Frequency of Outcomes for Points Lost',plotOutput('LosingOutcomes'))
-                )
+              ),
+              fluidRow(
+                box(h2('Outcome Breakdown'),
+                    selectInput("breakdown", "Outcome Type:", c(as.character(unique(CIZR$errorType))), selected = 'Net'), width = 4)
+                # box(
+                #   plotlyOutput('MatchWins'), width = 8
+                # ),
+                
+              ),
+              fluidRow(
+                box(title = 'Outcome Breakdown (Strengths)', plotOutput('WinningBreakdown')),
+                box(title = 'Outcome Breakdown (Weaknesses)', plotOutput('LosingBreakdown'))
+              )
               # fluidRow(
               #   valueBoxOutput('MatchWinsBox'),
               #   valueBoxOutput('TotalMatchesBox'),
@@ -95,8 +107,7 @@ ui <- dashboardPage(
               #          valueBoxOutput('TotalMatchesBox'),
               #          valueBoxOutput('MatchLossesBox'))
               # )
-              
-              
+
               
       ), 
       tabItem('player', 
@@ -136,6 +147,14 @@ server <- function(input, output){
   
   output$LosingOutcomes <- renderPlot({
     CIZR %>% OutcomesBar(name = input$player, time=input$time, won = F)
+  })
+  
+  output$WinningBreakdown <- renderPlot({
+    CIZR %>% BreakdownBar(name = input$player, time=input$time)
+  })
+  
+  output$LosingBreakdown <- renderPlot({
+    CIZR %>% BreakdownBar(name = input$player, time=input$time, won = F)
   })
   
   output$MatchesBox <- renderInfoBox({
