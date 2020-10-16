@@ -238,47 +238,25 @@ WonByTotalPlotly <- function(data, var){
 #Creates a plotly bar chart of Average 'Vars' per Match based on the 'wonbytotal' input selector (eg. points, deuces)
 AvgPointsMatchPlotly <- function(data, var){
   sym_w <- as.symbol(str_c(var,'Won'))
-  
-  # matches = data %>% group_by(month) %>%  tally() #summarise(n = n()) 
-  # print(matches)
+  sym_t <- as.symbol(str_c('Total',var))
   
   ggplotly(
     data %>%
       group_by(month) %>%
-      dplyr::summarise(avgPoints = sum(!!sym_w)/tally(matches)) %>%
+      dplyr::summarise(avgPoints = mean(!!sym_w), totalPoints = mean(!!sym_t)) %>%
       ggplot(aes(x = month)) +
-      geom_col(aes(y = avgPoints),
+      geom_col(aes(y = totalPoints),
                fill = '#A9A9A9',
                alpha = 1,
                position = 'dodge') +
-      # geom_col(aes(y = TotalPoints), fill = '#D45555',  alpha = 1) +
-      labs(title = str_c(var, ' Won Over Time'), 
-           y = var )+
-      theme_minimal()
+      geom_col(aes(y = avgPoints), fill = '#D45555',  alpha = 1) +
+      labs(title = str_c('Average ', var, ' Won Per Match'), 
+           y = var, x = 'Month' )+
+      theme_minimal() +
+      # legend(-1, 1.9, c("Total Points","Average Points")) +
+      theme(legend.position = "bottom")
   )
 }
-
-# This shows the total points won for each month
-# AvgPointsMatchPlotly <- function(data, var){
-#   sym_w <- as.symbol(str_c(var,'Won'))
-#   
-#   ggplotly(
-#     data %>%
-#       group_by(month) %>%
-#       dplyr::summarise(avgPoints = sum(!!sym_w)) %>%
-#       ggplot(aes(x = month)) +
-#       geom_col(aes(y = avgPoints),
-#                fill = '#A9A9A9',
-#                alpha = 1,
-#                position = 'dodge') +
-#       # geom_col(aes(y = TotalPoints), fill = '#D45555',  alpha = 1) +
-#       labs(title = str_c(var, ' Won Over Time'), 
-#            y = var )+
-#       theme_minimal()
-#   )
-# }
-
-
 
 
 
