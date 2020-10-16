@@ -216,8 +216,8 @@ wonPlayed <- function(data, var) {
 
 #Creates a plotly bar chart of won by total over the months of a players career
 WonByTotalPlotly <- function(data, var){
-  sym_w <- as.symbol(str_c(var,'Won'))
-  sym_t <- as.symbol(str_c('Total',var))
+  sym_w <- as.symbol(str_c(var,'Won'))  # This is just creating the text for the variable name
+  sym_t <- as.symbol(str_c('Total',var))  # This is also creating the text for the var name
   
   ggplotly(
     data %>%
@@ -234,6 +234,53 @@ WonByTotalPlotly <- function(data, var){
       theme_minimal()
   )
 }
+
+#Creates a plotly bar chart of Average 'Vars' per Match based on the 'wonbytotal' input selector (eg. points, deuces)
+AvgPointsMatchPlotly <- function(data, var){
+  sym_w <- as.symbol(str_c(var,'Won'))
+  
+  # matches = data %>% group_by(month) %>%  tally() #summarise(n = n()) 
+  # print(matches)
+  
+  ggplotly(
+    data %>%
+      group_by(month) %>%
+      dplyr::summarise(avgPoints = sum(!!sym_w)/tally(matches)) %>%
+      ggplot(aes(x = month)) +
+      geom_col(aes(y = avgPoints),
+               fill = '#A9A9A9',
+               alpha = 1,
+               position = 'dodge') +
+      # geom_col(aes(y = TotalPoints), fill = '#D45555',  alpha = 1) +
+      labs(title = str_c(var, ' Won Over Time'), 
+           y = var )+
+      theme_minimal()
+  )
+}
+
+# This shows the total points won for each month
+# AvgPointsMatchPlotly <- function(data, var){
+#   sym_w <- as.symbol(str_c(var,'Won'))
+#   
+#   ggplotly(
+#     data %>%
+#       group_by(month) %>%
+#       dplyr::summarise(avgPoints = sum(!!sym_w)) %>%
+#       ggplot(aes(x = month)) +
+#       geom_col(aes(y = avgPoints),
+#                fill = '#A9A9A9',
+#                alpha = 1,
+#                position = 'dodge') +
+#       # geom_col(aes(y = TotalPoints), fill = '#D45555',  alpha = 1) +
+#       labs(title = str_c(var, ' Won Over Time'), 
+#            y = var )+
+#       theme_minimal()
+#   )
+# }
+
+
+
+
 
 #creates a plotly line chart of win rate over the players career
 WinRatePlotly <- function(data, var){

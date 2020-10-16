@@ -62,8 +62,11 @@ ui <- dashboardPage(
               )),
               
               fluidRow(
+                # box(
+                #   plotlyOutput('WonByTotal'), width = 6
+                # ), 
                 box(
-                  plotlyOutput('WonByTotal'), width = 6
+                  plotlyOutput('AvgPointsMatch'), width = 6
                 ), 
                 box(
                   plotlyOutput('WinRate'), width = 6
@@ -145,6 +148,10 @@ server <- function(input, output){
   
   output$WonByTotal <- renderPlotly({
     AllData$match %>% filter(player == input$player) %>% WonByTotalPlotly(input$wonbytotal)
+  })
+  
+  output$AvgPointsMatch <- renderPlotly({
+    AllData$match %>% filter(player == input$player) %>% AvgPointsMatchPlotly(input$wonbytotal)
   })
   
   output$WinRate <- renderPlotly({
