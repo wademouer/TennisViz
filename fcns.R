@@ -40,6 +40,15 @@ MatchFilter <- function(CIZR) {
               Winners = sum(!pointWonBy & outcome == 'Winner'),
               ErrorsForced = sum(!pointWonBy & outcome == 'ForcedError'), 
               UnforcedErrors = sum(pointWonBy & outcome == 'UnforcedError'),
+              ErrorByNet = sum(pointWonBy & outcome == 'UnforcedError' & errorType == 'Net'),
+              ErrorByOut = sum(pointWonBy & outcome == 'UnforcedError' & errorType == 'Long'),
+              ErrorByForehand = sum(pointWonBy & outcome == 'UnforcedError' & shotType == 'Forehand'),
+              ErrorByBackhand = sum(pointWonBy & outcome == 'UnforcedError' & shotType == 'Backhand'),
+              ErrorByVolley = sum(pointWonBy & outcome == 'UnforcedError' & shotType == 'Volley'),
+              WinnerByForehand = sum(!pointWonBy & outcome == 'Winner' & shotType == 'Forehand'),
+              WinnerByBackhand = sum(!pointWonBy & outcome == 'Winner' & shotType == 'Backhand'),
+              WinnerByVolley = sum(!pointWonBy & outcome == 'Winner' & shotType == 'Volley'),
+              WinnersToUnforcedErrors = Winners/UnforcedErrors,
               BreakPoints =  sum(server & returnerScore == 40),
               BreakPointsWon = sum(server & returnerScore == 40 & !pointWonBy),
               Aces = sum(!pointWonBy & outcome == 'Ace'),
@@ -284,6 +293,43 @@ OutcomesBar <- function(data, time = 'Career', name, won = T){
          fill = '') + 
     scale_fill_manual(values = pal)  + theme_minimal(base_size = 16)
   
+}
+
+ErrorShot <- function(data, name){
+dataP <- data$player %>% filter(player == name)
+dfError <- data.frame(
+      UE <- dataP$UnforcedErrors,
+      Error = c("Forehand", "Backhand", "Volley"),
+      ErrorAmounts = c(dataP$ErrorByForehand/UE, dataP$ErrorByBackhand/UE, dataP$ErrorByVolley/UE) %>% round(3)
+    )
+  
+dfError <- dfError %>%
+    arrange(desc(Error)) %>%
+    mutate(lab.ypos = cumsum(ErrorAmounts) - 0.5*ErrorAmounts)
+    ggplot(dfError, aes(x = "", y = ErrorAmounts, fill = Error)) +
+    geom_bar(width = 1, stat = "identity", color = "white") +
+    coord_polar("y", start = 0)+
+    geom_text(aes(y = lab.ypos, label = percent(ErrorAmounts)), color = "white")+
+    scale_fill_manual(values = pal) +
+    theme_void(base_size = 16)
+}
+  
+ErrorType <- function(data, name){
+  dataP <- data$player %>% filter(player == name)
+  dfError <- data.frame(
+    UE <- dataP$UnforcedErrors,
+    Error = c("Out", "Net"),
+    ErrorAmounts = c(dataP$ErrorByOut/UE, dataP$ErrorByNet/UE) %>% round(3)
+  )
+  
+  dfError <- dfError %>%
+    arrange(desc(Error)) %>%
+    mutate(lab.ypos = cumsum(ErrorAmounts) - 0.5*ErrorAmounts)
+    ggplot(dfError, aes(x = "", y = ErrorAmounts, fill = Error)) +
+      geom_bar(width = 1, stat = "identity", color = "white") +
+      coord_polar("y", start = 0)+
+      geom_text(aes(y = lab.ypos, label = percent(ErrorAmounts)), color = "white")+
+      scale_fill_manual(values = pal) + theme_void(base_size = 16)
 }
 
 
