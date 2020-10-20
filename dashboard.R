@@ -20,8 +20,8 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     
-    shinyDashboardThemes(theme = 'flat_red'),
-    #shinyDashboardThemes(theme = 'grey_dark'),
+    #shinyDashboardThemes(theme = 'flat_red'),
+    shinyDashboardThemes(theme = 'grey_light'),
     
     
     tabItems(
@@ -37,7 +37,6 @@ ui <- dashboardPage(
                               fluidRow(infoBoxOutput('bottom1'), infoBoxOutput('bottom2'), infoBoxOutput('bottom3')))
                        ),
               
-              fluidRow(box(DT::dataTableOutput('playerStatTable'), width = 12)), 
               
               fluidRow(
                 box(h2('Stat Development Over Time'),width = 6),
@@ -52,7 +51,9 @@ ui <- dashboardPage(
                 box(
                   plotlyOutput('statByMonth'), width = 6
                 )
-              )
+              ),
+              fluidRow(box(DT::dataTableOutput('playerStatTable'), width = 12))
+              
       ),
       tabItem('outcomes_errors',
               fluidRow(box(h2("Outcomes and Errors"), width = 6), 
@@ -73,8 +74,8 @@ ui <- dashboardPage(
               # Shot type breakdown bar charts
               fluidRow(
                 box(title = 'Shot Type Breakdown (Wins)', plotOutput('WinningShotBreakdown'), width=3),
-                box(title = 'Shot Type Breakdown (Losses)', plotOutput('LosingShotBreakdown'), width=3),
                 box(title = 'Error Type Breakdown (Wins)', plotOutput('WinningErrorBreakdown'), width=3),
+                box(title = 'Shot Type Breakdown (Losses)', plotOutput('LosingShotBreakdown'), width=3),
                 box(title = 'Error Type Breakdown (Losses)', plotOutput('LosingErrorBreakdown'), width=3)
               ),
               
@@ -91,7 +92,7 @@ ui <- dashboardPage(
       
       tabItem('team_leaderboard', 
               fluidRow(box(h1('Team Leaderboard'))),
-              fluidRow(box(DT::dataTableOutput('TeamLeaderboard')))
+              fluidRow(box(DT::dataTableOutput('TeamLeaderboard'), width = 12))
       )
       
     )
@@ -108,12 +109,12 @@ server <- function(input, output){
   output$WinPctTable <- DT::renderDataTable({wonPlayedTable(input$player)})
   
   
-  output$top1 <- renderInfoBox({infoBox('Strongest Stat', key()$top[1], color = 'red', width = 12)})
-  output$top2 <- renderInfoBox({infoBox('Second Strongest', key()$top[2], color = 'red', width = 12)})
-  output$top3 <- renderInfoBox({infoBox('Third Strongest', key()$top[3], color = 'red', width = 12)})
-  output$bottom1 <- renderInfoBox({infoBox('Weakest Stat', key()$bottom[1], color = 'blue', width = 12)})
-  output$bottom2 <- renderInfoBox({infoBox('Second Weakest', key()$bottom[2], color = 'blue', width = 12)})
-  output$bottom3 <- renderInfoBox({infoBox('Third Weakest', key()$bottom[3], color = 'blue', width = 12)})
+  output$top1 <-   renderInfoBox({infoBox('Strongest Stat', key()$top[1], color = 'red'    )})
+  output$top2 <- renderInfoBox({infoBox('Second Strongest', key()$top[2], color = 'red'     )})
+  output$top3 <-  renderInfoBox({infoBox('Third Strongest', key()$top[3], color = 'red'     )})
+  output$bottom1 <- renderInfoBox({infoBox('Weakest Stat', key()$bottom[1], color = 'blue'  )})
+  output$bottom2 <- renderInfoBox({infoBox('Second Weakest', key()$bottom[2], color = 'blue')})
+  output$bottom3 <- renderInfoBox({infoBox('Third Weakest', key()$bottom[3], color = 'blue' )})
   
   output$playerStatTable <- DT::renderDataTable({playerStatTable(input$player)})
   
