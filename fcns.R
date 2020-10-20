@@ -162,10 +162,10 @@ wonPlayedTable <- function(name){
   table = data.frame('Category' = c('Matches', 'Sets', 'Games', 'Points'),
                      'Total' = t(data[1,c(1,3,5,7)]),
                      'Won' = t(data[1,c(2,4,6,8)]))
-  table$Percentage = round(100 * table$Won / table$Total)
+  table$Percentage = table$Won / table$Total
   
   table <- table %>% 
-    mutate(Percentage = str_c(Percentage, '%'))%>%
+    mutate(Percentage = scales::percent(Percentage))%>%
     remove_rownames() %>% column_to_rownames(var = 'Category') 
   datatable(table, options = list(dom = 't'))
 }
@@ -353,7 +353,7 @@ ErrorTable  <- function(data, name, won = T){
            Type = errorType,
            Shot = shotType) %>% 
     summarise(Count = n()) %>% ungroup() %>% 
-    mutate(Frequency = str_c( round(100 *Count / sum(Count)) , '%')) %>% 
+    mutate(Frequency = scales::percent(Count / sum(Count))) %>% 
     arrange(desc(Count))
   
   data %>% datatable(options = list(dom = 't'))
@@ -415,6 +415,7 @@ CIZR %>% TreeMap('Career', 'Bianca Moldovan', won = F)
 
 #Takes player data
 KeyStats <- function(data, name, time = 'Career', top = T){
+  
   data <- data %>% group_by(player) %>% mutate(across(everything(), ~ . / TotalMatches)) %>% 
     mutate(`Break Point Win Percent` = BreakPointsWon/BreakPoints,
            `First Serve In Percent` = FirstServeInCount/FirstServeCount,
@@ -429,6 +430,7 @@ KeyStats <- function(data, name, time = 'Career', top = T){
            #ServiceGameWinPct = ServiceGamesWon/ServiceGames
     ) %>% 
     select(-TotalMatches) 
+  
   for(col in 2:length(data)){
     data[,col] = min_rank(pull(data,col))
     if( !(colnames(data[,col]) %in% c('UnforcedErrors', 'DoubleFault'))){
@@ -491,7 +493,7 @@ teamLeaderboard <- function(){
   AllData$player %>% select(player, TotalMatches) %>% left_join(tb, by = 'player')%>% 
     remove_rownames() %>% 
     column_to_rownames(var = 'player') %>% 
-    datatable()
+    datatable(options = list(dom = 't',scrollX = TRUE, pageLength = 20))
 }
 
 
@@ -556,7 +558,6 @@ playerStatByMonth <- function(name, measure, line = T){
   return(ggplotly(g) %>% layout(legend = list(orientation = 'h', x= .35, y = -.2)))
     
 }
-playerStatByMonth('Bianca Moldovan', AllData$matchMeasures[2])
 
 playerStatTable <- function(name){
   
