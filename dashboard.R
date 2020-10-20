@@ -2,8 +2,6 @@
 library(shiny)
 #install.packages('shinydashboard')
 #install.packages('dashboardthemes')
-#install.packages('plotly')
-library(tidyverse)
 library(shinydashboard)
 library(dashboardthemes)
 library(ggthemes)
@@ -11,124 +9,117 @@ library(plotly)
 
 
 ui <- dashboardPage( 
-  dashboardHeader(title = "Player Data "),
+  dashboardHeader(title = "Orange6"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Player", tabName = "player", icon = icon("team"), 
-               menuSubItem("Overview", tabName = "overview", icon = icon("team")),
-               menuSubItem("Serving Data", tabName = "serving", icon = icon("team")),
-               menuSubItem("Returning Data", tabName = "returning", icon = icon("team")),
-               menuSubItem("Rally Data", tabName = "rally", icon = icon("team"))), 
-      menuItem("Team", tabName = "overview", icon = icon("team"), 
-               menuSubItem("Overview", tabName = "teamOverview", icon = icon("team")),
-               menuSubItem("Leaderboard", tabName = "teamLeaderboard", icon = icon("team")))
-      
+      menuItem("Player Overview", tabName = "poverview", icon = icon("team")),
+      menuItem("Outcomes and Errors", tabName = "outcomes_errors"),
+      menuItem("Serving and Returning", tabName = 'serve_return'), 
+      menuItem('Team Leaderboard', tabName = 'team_leaderboard')
     )
   ),
   dashboardBody(
+    
     shinyDashboardThemes(theme = 'flat_red'),
-    #customTheme,
+    #shinyDashboardThemes(theme = 'grey_dark'),
+    
+    
     tabItems(
-      tabItem("overview",
+      tabItem("poverview",
               fluidRow(
-                box(h1('Stats Overview'),selectInput("player", "Player:", unique(AllData$match$player)), width = 4)
-                ),
+                box(selectInput("player", "Player:", unique(AllData$match$player)),
+                     width = 4)
+              ), 
+              
+              fluidRow(column(width = 4, DT::dataTableOutput('WinPctTable')), 
+                       column(width = 8, 
+                              fluidRow(infoBoxOutput('top1'), infoBoxOutput('top2'), infoBoxOutput('top3')),
+                              fluidRow(infoBoxOutput('bottom1'), infoBoxOutput('bottom2'), infoBoxOutput('bottom3')))
+                       ),
+              
+              fluidRow(box(DT::dataTableOutput('playerStatTable'), width = 12)), 
               
               fluidRow(
-                infoBoxOutput('MatchesBox'),
-                infoBoxOutput('GamesBox'),
-                infoBoxOutput('PointsBox')
-              ),
-              
-              # fluidRow(
-              #   column(width = 6,
-              #          box(width = NULL,
-              #              #plotlyOutput('MatchWins')
-              #              plotOutput('WinningOutcomes')
-              #          ),
-              #          box(width = NULL,
-              #              plotOutput('LosingOutcomes'))),
-              #   column(width = 6,
-              #          infoBoxOutput('MatchesBox'),
-              #          infoBoxOutput('GamesBox'),
-              #          infoBoxOutput('PointsBox'),
-              #          valueBox(12,subtitle = 'Box'))
-              # ),
-              
-              fluidRow(
-                box(h2('Win Rates over time'),width = 4),
+                box(h2('Stat Development Over Time'),width = 6),
                 box(
-                selectInput("wonbytotal", "Stat:", c('Points', 'Deuces' ,'Games', 'Sets')), width = 4
-              )),
+                  selectInput("measureOverTime", "Measure:", AllData$matchMeasures, selected = 'Games Won per Match'), width = 6
+                )),
               
               fluidRow(
                 box(
-                  plotlyOutput('WonByTotal'), width = 6
+                  plotlyOutput('statByMatch'), width = 6
                 ), 
                 box(
-                  plotlyOutput('WinRate'), width = 6
+                  plotlyOutput('statByMonth'), width = 6
                 )
-              ),
-              fluidRow(
-                box(h2('Outcomes'),
-                    selectInput("time", "Time Period:", c('Career', as.character(unique(AllData$match$year))), selected = 'Career'), width = 4)
-                # box(
-                #   plotlyOutput('MatchWins'), width = 8
-                # ),
-                
-              ),
+              )
+      ),
+      tabItem('outcomes_errors',
+              fluidRow(box(h2("Outcomes and Errors"), width = 6), 
+                       box(selectInput("time", "Time Period:", 
+                                       c('Career', as.character(unique(AllData$match$year))), 
+                                       selected = 'Career'), width = 6)),
               
               fluidRow(
                 box(title = 'Frequency of Outcomes for Points Won',plotOutput('WinningOutcomes')),
                 box(title = 'Frequency of Outcomes for Points Lost',plotOutput('LosingOutcomes'))
-                )
-              # fluidRow(
-              #   valueBoxOutput('MatchWinsBox'),
-              #   valueBoxOutput('TotalMatchesBox'),
-              #   valueBoxOutput('MatchLossesBox')
-              # ),
-              # box(
-              #   width = 12,
-              #   column(width = 6, plotlyOutput('MatchWins')),
-              #   column(width = 6,
-              #          valueBoxOutput('MatchWinsBox'),
-              #          valueBoxOutput('TotalMatchesBox'),
-              #          valueBoxOutput('MatchLossesBox'))
-              # )
+              ),
               
+              fluidRow(
+                box(h3('Outcome Breakdown'), width = 6),
+                box(selectInput("outcomeSelect", "Outcome Type:", c(as.character(unique(CIZR$outcome))), selected = 'UnforcedError'), width = 6)
+              ),
               
+              # Shot type breakdown bar charts
+              fluidRow(
+                box(title = 'Shot Type Breakdown (Wins)', plotOutput('WinningShotBreakdown'), width=3),
+                box(title = 'Shot Type Breakdown (Losses)', plotOutput('LosingShotBreakdown'), width=3),
+                box(title = 'Error Type Breakdown (Wins)', plotOutput('WinningErrorBreakdown'), width=3),
+                box(title = 'Error Type Breakdown (Losses)', plotOutput('LosingErrorBreakdown'), width=3)
+              ),
               
+              fluidRow(
+                box(DT::dataTableOutput('ErrorTable') ,width = 4),
+                box(plotOutput('ErrorShot') ,width = 4),
+                box(plotOutput('ErrorType') ,width = 4)
+              )
+              ),
+      tabItem('serve_return',
+              fluidRow(column(width = 4, h2('Serving info table')),
+                       column(width = 8), h2('Serving info boxes'))
       ), 
-      tabItem('player', 
-              h1('This is the player page'))
+      
+      tabItem('team_leaderboard', 
+              fluidRow(box(h1('Team Leaderboard'))),
+              fluidRow(box(DT::dataTableOutput('TeamLeaderboard')))
+      )
+      
     )
+    
   )
 )
 
 
 server <- function(input, output){
-  output$MatchWins <- renderPlotly({
-    ggplotly(
-      AllData$match %>% 
-        filter(player == input$player) %>% 
-        yearFilter(input$time) %>% 
-        mutate(MatchOutcome = case_when(SetsWon == 2~ 'Win', 
-                                        SetsWon != 2 ~ 'Loss',
-                                        TRUE ~'Other')) %>% 
-        ggplot(aes(x = date, y = TotalGames, color = MatchOutcome, size = PointsWon)) +
-        geom_point() + 
-        scale_color_manual(values = pal)+
-        theme_minimal()
-    )
+  key <- reactive({
+    KeyStats(AllData$player, input$player)
   })
   
-  output$WonByTotal <- renderPlotly({
-    AllData$match %>% filter(player == input$player) %>% WonByTotalPlotly(input$wonbytotal)
-  })
+  output$WinPctTable <- DT::renderDataTable({wonPlayedTable(input$player)})
   
-  output$WinRate <- renderPlotly({
-    AllData$match %>% filter(player == input$player) %>% WinRatePlotly(input$wonbytotal)
-  })
+  
+  output$top1 <- renderInfoBox({infoBox('Strongest Stat', key()$top[1], color = 'red', width = 12)})
+  output$top2 <- renderInfoBox({infoBox('Second Strongest', key()$top[2], color = 'red', width = 12)})
+  output$top3 <- renderInfoBox({infoBox('Third Strongest', key()$top[3], color = 'red', width = 12)})
+  output$bottom1 <- renderInfoBox({infoBox('Weakest Stat', key()$bottom[1], color = 'blue', width = 12)})
+  output$bottom2 <- renderInfoBox({infoBox('Second Weakest', key()$bottom[2], color = 'blue', width = 12)})
+  output$bottom3 <- renderInfoBox({infoBox('Third Weakest', key()$bottom[3], color = 'blue', width = 12)})
+  
+  output$playerStatTable <- DT::renderDataTable({playerStatTable(input$player)})
+  
+  output$statByMatch <- renderPlotly({playerStatByMonth(input$player, input$measureOverTime, F)})
+  
+  output$statByMonth <- renderPlotly({playerStatByMonth(input$player, input$measureOverTime, T)})
   
   output$WinningOutcomes <- renderPlot({
     CIZR %>% OutcomesBar(name = input$player, time=input$time)
@@ -138,44 +129,39 @@ server <- function(input, output){
     CIZR %>% OutcomesBar(name = input$player, time=input$time, won = F)
   })
   
-  output$MatchesBox <- renderInfoBox({
-    infoBox(
-      'Matches Won',
-      AllData$match %>% 
-        filter(player == input$player) %>% 
-        yearFilter('Career') %>% 
-        wonPlayed('Matches'),
-      #icon = icon('trophy', lib = 'glyphicon'),
-      fill = TRUE,
-      color = 'blue'
-    )
+  
+  # Shot Type Breakdown bar charts
+  output$WinningShotBreakdown <- renderPlot({
+    CIZR %>% BreakdownShot(name = input$player, time=input$time, outcomeParam=input$outcomeSelect)
   })
   
-  output$GamesBox <- renderInfoBox({
-    infoBox(
-      'Games Won',
-      AllData$match %>% 
-        filter(player == input$player) %>% 
-        yearFilter('Career') %>% 
-        wonPlayed('Games'),
-      #icon = icon('tennis ball', lib = 'glyphicon'),
-      fill = TRUE,
-      color = 'purple'
-    )
+  output$LosingShotBreakdown <- renderPlot({
+    CIZR %>% BreakdownShot(name = input$player, time=input$time, outcomeParam=input$outcomeSelect, won = F)
   })
   
-  output$PointsBox <- renderInfoBox({
-    infoBox(
-      'Points Won',
-      AllData$match %>% 
-        filter(player == input$player) %>% 
-        yearFilter('Career') %>% 
-        wonPlayed('Points'),
-      #icon = icon('thumbs-down', lib = 'glyphicon'),
-      fill = TRUE,
-      color = 'red'
-    )
+  
+  # Error Type Breakdown bar charts
+  output$WinningErrorBreakdown <- renderPlot({
+    CIZR %>% BreakdownError(name = input$player, time=input$time, outcomeParam=input$outcomeSelect)
   })
+  
+  output$LosingErrorBreakdown <- renderPlot({
+    CIZR %>% BreakdownError(name = input$player, time=input$time, outcomeParam=input$outcomeSelect, won = F)
+  })
+  
+  output$ErrorTable <- DT::renderDataTable({ErrorTable(CIZR, name = input$player)})
+  
+  output$ErrorShot <- renderPlot({
+    ErrorShot(CIZR, input$player)
+  })
+  
+  output$ErrorType <- renderPlot({
+    ErrorType(CIZR, input$player)
+  })
+  
+  output$TeamLeaderboard <- DT::renderDataTable({teamLeaderboard()})
+  
 }
 
 shinyApp(ui, server)
+
