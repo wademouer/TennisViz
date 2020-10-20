@@ -80,7 +80,9 @@ ui <- dashboardPage(
               
               fluidRow(
                 box(title = 'Frequency of Outcomes for Points Won',plotOutput('WinningOutcomes')),
-                box(title = 'Frequency of Outcomes for Points Lost',plotOutput('LosingOutcomes'))
+                box(title = 'Frequency of Outcomes for Points Lost',plotOutput('LosingOutcomes')),
+                box(title = 'Unforced Error by Shot %',plotOutput('ErrorShot')),
+                box(title = 'Unforced Error by Type %',plotOutput('ErrorType'))
                 )
               # fluidRow(
               #   valueBoxOutput('MatchWinsBox'),
@@ -136,6 +138,14 @@ server <- function(input, output){
   
   output$LosingOutcomes <- renderPlot({
     CIZR %>% OutcomesBar(name = input$player, time=input$time, won = F)
+  })
+  
+    output$ErrorShot <- renderPlot({
+   ErrorShot(AllData, input$player)
+  })
+  
+  output$ErrorType <- renderPlot({
+    ErrorType(AllData, input$player)
   })
   
   output$MatchesBox <- renderInfoBox({
