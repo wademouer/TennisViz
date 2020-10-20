@@ -342,12 +342,9 @@ ErrorTable  <- function(data, name, won = T){
   data <- data %>% 
     filter(player == name, 
            pointWonBy == 1,
-           outcome %in% c('UnforcedError', 'ForcedError', 'Fault')) %>% 
+           outcome %in% c('UnforcedError', 'ForcedError')) %>% 
     mutate(outcome = case_when(outcome == 'UnforcedError' ~ 'Unforced',
-                               outcome == 'ForcedError' ~ 'Forced', 
-                               T ~ 'Fault'),
-           shotType = case_when(shotType == "" ~ 'Serve',
-                                T ~ shotType))%>% 
+                               T ~ 'Forced'))%>% 
     group_by(outcome, errorType, shotType) %>% 
     rename(Error = outcome,
            Type = errorType,
@@ -356,61 +353,29 @@ ErrorTable  <- function(data, name, won = T){
     mutate(Frequency = scales::percent(Count / sum(Count))) %>% 
     arrange(desc(Count))
   
-  data %>% datatable(options = list(dom = 't'))
+  data %>% datatable(options = list(dom = 't', pageLength = 15))
   
 }
 
 
-TreeMap <- function(data, time = 'Career', name, won = T){
-  data <- data %>% filter(case_when(won ~ !pointWonBy,
-                                    !won ~ pointWonBy == 1))
+TreeMap <- function(data,  name, is.server = T){
+  
+  data <- data %>% filter(player == name, 
+                          case_when(is.server ~ !server,
+                                    !is.server ~ server == 1))
 
-  if(time != 'Career'){
-    data <- data %>% filter(format(date, format = '%Y') == time)
-  }
+  data <- data %>% mutate(FirstServe = case_when(firstServeIn ~ 'First Serve In', T ~ 'First Serve Out', ),
+                  pointOutcome = case_when(!pointWonBy ~ 'Point Won', T ~ 'Point Lost')) %>% 
+    select(player, FirstServe, pointOutcome, outcome, errorType, shotType) %>% 
+    group_by(player, FirstServe, pointOutcome, outcome, shotType, errorType) %>% 
+    summarise(Count = n())
   
-  dataP <- data %>% filter(player == name)
-  
-  getFreq <- function(df, name){
-    df %>% 
-      group_by(Error, type, shotType) %>% 
-      #group_by(outcome, shotType, errorType) %>% 
-      summarize(n = n()) %>% 
-      #ungroup() %>% 
-      mutate(#outcome = factor(outcome, levels = outcome[order(n)]),
-        # PointWon = case_when(!pointWonBy ~ 'Won',
-        #                      T ~ 'Lost'),
-        freq = n / sum(n),
-        filter = name)
-  }
-  
-  p <- 'PointWon'
-  
-  dataP %>% mutate(Error = case_when(outcome == 'UnforcedError' ~ 'Unforced Error',
-                                     outcome %in% c('ForcedError', 'Fault') ~ outcome,
-                                     TRUE~ 'Non-Error'),
-                   type = case_when(errorType %in% c('Long', 'Net') ~ errorType,
-                                    TRUE ~ outcome) ) %>% #filter(Error != 'Non-Error') %>% 
-    getFreq(name)  %>% 
-    treemap(index = c('Error', 'type', 'shotType'), vSize = 'n', type = 'index',
-            title = str_c('Outcome Breakdown for Points ', case_when(won ~ 'Won', !won ~ 'Lost')),
-            palette = pal[c(4,3,2,1)],
-            fontsize.labels=c(15,13, 10),                # size of labels. Give the size per level of aggregation: size for group, size for subgroup, sub-subgroups...
-            fontcolor.labels=c("white"),    # Color of labels
-            fontface.labels=c(4,2,1),                  # Font of labels: 1,2,3,4 for normal, bold, italic, bold-italic...
-            bg.labels=c("transparent"),              # Background color of labels
-            align.labels=list(
-              c("center", "top"),
-              c("center", "center"),
-              c("right", "bottom")
-            ),                                   # Where to place labels in the rectangle?
-            overlap.labels=0.5,                      # number between 0 and 1 that determines the tolerance of the overlap between labels. 0 means that labels of lower levels are not printed if higher level labels overlap, 1  means that labels are always printed. In-between values, for instance the default value .5, means that lower level labels are printed if other labels do not overlap with more than .5  times their area size.
-            border.col = c('black','white', 'black'),
-            inflate.labels=F) # %>% d3tree3()
-
+  data %>%  treemap(index = c('FirstServe', 'pointOutcome', 'outcome'), vSize = 'Count', type = 'index',
+                 title = 'Outcome Breakdown when Serving', 
+                 palette = pal[c(1,3)]) %>% d3tree()
 }
 
-CIZR %>% TreeMap('Career', 'Bianca Moldovan', won = F)
+CIZR %>% TreeMap('Bianca Moldovan')
 
 
 #Takes player data
