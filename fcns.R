@@ -112,7 +112,9 @@ AllData$matchMeasures = c("Match Win Percent"   ,"Sets Won per Match" , "Games W
                           "Aces" ,"DoubleFault"  ,"Break Point Win Percent" , "First Serve In Percent" ,
                           "First Serve Won Percent", "Second Serve In Percent" , "Second Serve Won Percent",  "First Serve Returned Percent" ,
                           "Second Serve Returned Percent", "Short Rally Win Percent" , "Med Rally Win Percent"   ,  "Long Rally Win Percent" )
-
+AllData$percentageNameStrings = c("Match Win Percent", "Break Point Win Percent", "First Serve In Percent" ,"First Serve Won Percent", "Second Serve In Percent" ,
+                                  "Second Serve Won Percent" ,"First Serve Returned Percent" , "Second Serve Returned Percent" ,
+                                  "Short Rally Win Percent" , "Med Rally Win Percent",  "Long Rally Win Percent"       )
 
 #Creates a filter to use with the input values for time period - either filters a specific year or returns original data
 yearFilter <- function(data, time){
@@ -165,9 +167,8 @@ wonPlayedTable <- function(name){
   table$Percentage = table$Won / table$Total
   
   table <- table %>% 
-    mutate(Percentage = scales::percent(Percentage))%>%
     remove_rownames() %>% column_to_rownames(var = 'Category') 
-  datatable(table, options = list(dom = 't'))
+  datatable(table, options = list(dom = 't')) %>% formatPercentage('Percentage')
 }
 
 ServeTable <- function(data, name){
@@ -183,15 +184,15 @@ ServeTable <- function(data, name){
   
   tb = data.frame('Serve' = c('First Serve', 'Second Serve'), 
                   'Count' = c(fCount, sCount), 'In' = c(fIn, sIn))
-  tb$`In Percentage` = round(100 * tb$In / tb$Count)
+  tb$`In Percentage` = tb$In / tb$Count
   tb$Won = c(fWon, sWon)
-  tb$`Won Percentage` = round(100*tb$Won / tb$In)
+  tb$`Won Percentage` = tb$Won / tb$In
   
   tb <- tb %>% 
     mutate(`In Percentage` = str_c(`In Percentage`, '%'),
            `Won Percentage` = str_c(`Won Percentage`, '%'))%>%
     remove_rownames() %>% column_to_rownames(var = 'Serve') 
-  datatable(tb, options = list(dom = 't'))
+  datatable(tb, options = list(dom = 't', pageLength = 15, scrollX = T)) %>% formatPercentage(c('In Percentage', 'Won Percentage'))
 } 
 
 #Creates a plotly bar chart of won by total over the months of a players career
@@ -342,21 +343,18 @@ ErrorTable  <- function(data, name, won = T){
   data <- data %>% 
     filter(player == name, 
            pointWonBy == 1,
-           outcome %in% c('UnforcedError', 'ForcedError', 'Fault')) %>% 
+           outcome %in% c('UnforcedError', 'ForcedError')) %>% 
     mutate(outcome = case_when(outcome == 'UnforcedError' ~ 'Unforced',
-                               outcome == 'ForcedError' ~ 'Forced', 
-                               T ~ 'Fault'),
-           shotType = case_when(shotType == "" ~ 'Serve',
-                                T ~ shotType))%>% 
+                               T ~ 'Forced'))%>% 
     group_by(outcome, errorType, shotType) %>% 
     rename(Error = outcome,
            Type = errorType,
            Shot = shotType) %>% 
     summarise(Count = n()) %>% ungroup() %>% 
-    mutate(Frequency = scales::percent(Count / sum(Count))) %>% 
+    mutate(Frequency = Count / sum(Count)) %>% 
     arrange(desc(Count))
   
-  data %>% datatable(options = list(dom = 't'))
+  data %>% datatable(options = list(dom = 't', pageLength = 15)) %>% formatPercentage('Frequency', 1)
   
 }
 
@@ -375,7 +373,7 @@ TreeMap <- function(data,  name, is.server = T){
   
   data %>%  treemap(index = c('FirstServe', 'pointOutcome', 'outcome'), vSize = 'Count', type = 'index',
                  title = 'Outcome Breakdown when Serving', 
-                 palette = pal[c(1,3)]) %>% d3tree()
+                 palette = pal[c(1,3)]) %>% d3tree(rootname = 'Serving Outcomes', celltext = )
 }
 
 CIZR %>% TreeMap('Bianca Moldovan')
@@ -450,20 +448,26 @@ teamLeaderboard <- function(){
                          `Short Rally Win Percent` = ShortRalliesWon/ShortRallies, 
                          `Med Rally Win Percent` = MedRalliesWon/MedRallies,
                          `Long Rally Win Percent` = LongRalliesWon/ LongRallies) %>% #,ServiceGameWinPct = ServiceGamesWon/ServiceGames
-     rename(`Match Win Percent` = matchWon,
-                 `Sets Won per Match` = SetsWon,
-                 `Games Won per Match` = GamesWon,
-                 `Points Won per Match` = PointsWon) %>% 
+    rename(`Match Win Percent` = matchWon,
+           `Sets Won per Match` = SetsWon,
+           `Games Won per Match` = GamesWon,
+           `Points Won per Match` = PointsWon) %>% 
     select(c(player, AllData$matchMeasures)) %>% 
-    mutate(across(where(is.numeric), ~ round(.,digits = 2)), 
-           across(c(2,11:20),  scales::percent))
+    mutate(across(where(is.numeric), ~ round(.,digits = 2))
+           #,across(c(2,11:20),  scales::percent)
+           )
   
-  AllData$player %>% select(player, TotalMatches) %>% left_join(tb, by = 'player')%>% 
+  bbb <- AllData$player %>% select(player, TotalMatches) %>% left_join(tb, by = 'player')%>% 
     remove_rownames() %>% 
-    column_to_rownames(var = 'player') %>% 
-    datatable(options = list(dom = 't',scrollX = TRUE, pageLength = 20))
+    column_to_rownames(var = 'player')
+  # %>% datatable([, input$show_vars, drop = FALSE])
+  
+  # bbb <- datatable(aaa[, input$show_vars, drop = FALSE])
+  
+  return(bbb)
+  
+  # bbb <- data.frame(aaa)
 }
-
 
 playerStatByMonth <- function(name, measure, line = T){
   data <- AllData$match %>% filter(player == name) %>% mutate(matchWon = as.numeric(matchWon))
@@ -570,14 +574,14 @@ ErrorShot <- function(data, name){
   dataP <- data %>% filter(player == name) %>% PieChartMutate()
   dfError <- data.frame(
     UE <- dataP$UnforcedErrors,
-    Error = c("Forehand", "Backhand", "Volley"),
+    Shot = c("Forehand", "Backhand", "Volley"),
     ErrorAmounts = c(dataP$ErrorByForehand/UE, dataP$ErrorByBackhand/UE, dataP$ErrorByVolley/UE) %>% round(3)
   )
   
   dfError <- dfError %>%
-    arrange(desc(Error)) %>%
+    arrange(desc(Shot)) %>%
     mutate(lab.ypos = cumsum(ErrorAmounts) - 0.5*ErrorAmounts)
-  ggplot(dfError, aes(x = "", y = ErrorAmounts, fill = Error)) +
+  ggplot(dfError, aes(x = "", y = ErrorAmounts, fill = Shot)) +
     geom_bar(width = 1, stat = "identity", color = "white") +
     coord_polar("y", start = 0)+
     geom_text(aes(y = lab.ypos, label = scales::percent(ErrorAmounts)), color = "white")+
@@ -600,7 +604,6 @@ PieChartMutate <- function(data){
               WinnerByVolley = sum(!pointWonBy & outcome == 'Winner' & shotType == 'Volley'),
               WinnersToUnforcedErrors = Winners/UnforcedErrors)
 }
-
 
 ErrorType <- function(data, name){
   dataP <- data %>% filter(player == name) %>% PieChartMutate()
