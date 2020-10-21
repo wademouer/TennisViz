@@ -124,7 +124,7 @@ ui <- dashboardPage(
   dashboardHeader(title = "Orange6"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Player Overview", tabName = "poverview", icon = icon("team")),
+      menuItem("Player Overview", tabName = "poverview"),
       menuItem("Outcomes and Errors", tabName = "outcomes_errors"),
       menuItem("Serving", tabName = 'serve_return'), 
       menuItem('Team Leaderboard', tabName = 'team_leaderboard')
